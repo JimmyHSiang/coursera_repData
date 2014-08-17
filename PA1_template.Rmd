@@ -1,0 +1,147 @@
+# Reproducible Research: Peer Assessment 1
+
+## Loading and preprocessing the data
+```{r load data}
+setwd("D:/coursera_R/RepData/pa1")
+unzip(zipfile="activity.zip")
+data <- read.csv("activity.csv")
+attach(data)
+```
+
+```{r preprocess the data}
+library(xtable)
+#Set the output options for numbers
+options(scipen = 9, digits = 3 )
+print(xtable(summary(data)))
+```
+
+## What is mean total number of steps taken per day?
+```{r}
+library(ggplot2)
+data_noNA <- data[complete.cases(data), ]
+stepsperday <- tapply(data_noNA$steps, data_noNA$date, FUN=sum, na.rm=TRUE)
+mean.spd <- mean(stepsperday, na.rm=TRUE)
+median.spd <- median(stepsperday, na.rm=TRUE)
+```
+
+The mean total number of steps per day is 10766.189 and the median is 10765.
+
+Draw the histogram showing the frequency of 'total number of steps per day'
+
+```{r}
+hist(stepsperday, main = "Total Number of Steps Per Day (excluding missing values)", 
+    xlab = "Total Number of Steps Per Day", ylab = "Frequency (Number of Days)", 
+    breaks = 20, xlim = c(0, 25000), ylim = c(0, 15), col = 45)
+abline(v=mean.spd, col = rgb(1,0,0))
+abline(v=median.spd, col = rgb(0,0,1), lty = 3)
+```
+
+## What is the average daily activity pattern?
+```{r}
+StepsPerIntvl <- aggregate(x=list(steps=data_noNA$steps), by=list(interval=data_noNA$interval),FUN=mean, na.rm=TRUE)
+max.spi <- max(StepsPerIntvl$steps)
+max.int <- StepsPerIntvl[StepsPerIntvl$steps==max(max.spi),1]
+plot(StepsPerIntvl$interval,StepsPerIntvl$steps, ylab="Average number of steps taken",xlab="5-minute interval", main=NULL, type="l", lwd=2, col=45)
+abline(h=max.spi, col = c("red"),lty=3)
+abline(v=max.int, col = c("blue"),lty=6)
+```
+
+The maximum number of steps per interval in average is 206.17 and corresponds to the interval 835.
+
+## Imputing missing values
+
+There are many days/intervals where there are missing values (coded as `NA`). The presence of missing days may introduce bias into some calculations or summaries of the data.
+
+### Calculate and report the total number of missing values in the dataset
+```{r how_many_missing}
+missing <- is.na(data$steps)
+# How many missing
+table(missing)
+```
+
+There are 2304 rows with missing values.
+
+### Devise a strategy for filling in all of the missing values in the dataset.
+
+strategy : use the mean for that 5-minute interval
+
+### Create a new dataset that is equal to the original dataset but with the missing data filled in.
+
+```{r}
+#copy data to data_new
+data_new <- data
+# Replace each missing value with the mean value of its 5-minute interval
+ind <- which(is.na(data_new$steps))
+data_new[ind,1] <- StepsPerIntvl[as.factor(data_new[ind,3]),2]
+detach(data)
+attach(data_new)
+```
+
+### Make a histogram of the total number of steps taken (for the data_new).
+
+```{r}
+stepsperday_new <- tapply(data_new$steps, data_new$date, FUN=sum)
+mean.spd_new <- mean(stepsperday_new, na.rm=TRUE)
+median.spd_new <- median(stepsperday_new, na.rm=TRUE)
+hist(stepsperday_new, main = "Total Number of Steps Per Day (imputing missing values)", 
+    xlab = "Total Number of Steps Per Day", ylab = "Frequency (Number of Days)", 
+    breaks = 20, xlim = c(0, 25000), ylim = c(0, 25), col = 45)
+abline(v=mean.spd_new, col = rgb(1,0,0))
+abline(v=median.spd_new, col = rgb(0,0,1), lty = 3)
+```
+
+The new mean total number of steps per day is 10766.189 and the new median is 10766.189.
+
+The mean of the first part is 10766.189 as well as the mean of the second part (10766.189). The median of the fist part is 10765 is different from the median of the second part: 10766.189.
+
+According to the histogram,the Mean and median values are higher after imputing missing data. 
+
+#### What is the impact of imputing missing data on the estimates of the total daily number of steps?
+```{r}
+compare <- cbind(stepsperday,stepsperday_new)
+print(xtable(compare))
+```
+
+The first total daily number of steps estimation had 8 missing values, while the second one has 0 missing values.
+
+## Are there differences in activity patterns between weekdays and weekends?
+
+```{r}
+data_new$day <- weekdays(as.Date(date))
+attach(data_new)
+```
+
+```{r}
+d <- levels(factor(data_new$day))
+data_new$week <- "weekday"
+data_new[data_new$day=="Saturday",5]<-"weekend"
+data_new[data_new$day=="Sunday",5]<-"weekend"
+data_new$week <- as.factor(data_new$week)
+
+Spi_new <- aggregate(data_new$steps, by = list(data_new$interval, 
+    data_new$week), FUN = "mean", na.rm = TRUE)
+
+colnames(Spi_new) <- c("interval", "weekday_weekend", "avg_steps")
+
+max.spi_new <- max(Spi_new$avg_steps)
+max.int_new <- Spi_new[Spi_new$avg_steps==max(max.spi_new),1]
+```
+
+### Plot of the average number of steps taken each interval during weekends and weekdays
+
+```{r}
+sort_order <- order(as.numeric(Spi_new$interval))
+Spi_new <- Spi_new[sort_order, ]
+
+mean_by_day_type <- aggregate(data_new$steps, by = list(data_new$week), 
+    FUN = "mean", na.rm = TRUE)
+mean_weekdays <- round(mean_by_day_type[1, 2], 2)
+mean_weekends <- round(mean_by_day_type[2, 2], 2)
+```
+
+```{r}
+library(lattice)
+xyplot(avg_steps ~ as.numeric(interval) | as.factor(weekday_weekend), data = Spi_new, 
+    type = "l", layout = c(1, 2), col = c("purple"), main = "Average Number of Steps by Time Interval (imputing missing values)", 
+    xlab = "5-minute time period", ylab = "Avg number of steps")
+```
