@@ -24,7 +24,7 @@ mean.spd <- mean(stepsperday, na.rm=TRUE)
 median.spd <- median(stepsperday, na.rm=TRUE)
 ```
 
-The mean total number of steps per day is 10766.189 and the median is 10765.
+The mean total number of steps per day is **10766.189** and the median is **10765**.
 
 Draw the histogram showing the frequency of 'total number of steps per day'
 
@@ -35,6 +35,8 @@ hist(stepsperday, main = "Total Number of Steps Per Day (excluding missing value
 abline(v=mean.spd, col = rgb(1,0,0))
 abline(v=median.spd, col = rgb(0,0,1), lty = 3)
 ```
+
+![Sample panel plot](figures/1.PNG) 
 
 ## What is the average daily activity pattern?
 ```{r}
@@ -48,6 +50,8 @@ abline(v=max.int, col = c("blue"),lty=6)
 
 The maximum number of steps per interval in average is 206.17 and corresponds to the interval 835.
 
+![Sample panel plot](figures/2.PNG) 
+
 ## Imputing missing values
 
 There are many days/intervals where there are missing values (coded as `NA`). The presence of missing days may introduce bias into some calculations or summaries of the data.
@@ -59,7 +63,7 @@ missing <- is.na(data$steps)
 table(missing)
 ```
 
-There are 2304 rows with missing values.
+There are **2304** rows with missing values.
 
 ### Devise a strategy for filling in all of the missing values in the dataset.
 
@@ -90,7 +94,9 @@ abline(v=mean.spd_new, col = rgb(1,0,0))
 abline(v=median.spd_new, col = rgb(0,0,1), lty = 3)
 ```
 
-The new mean total number of steps per day is 10766.189 and the new median is 10766.189.
+![Sample panel plot](figures/3.PNG)
+
+The new mean total number of steps per day is **10766.189** and the new median is **10766.189**.
 
 The mean of the first part is 10766.189 as well as the mean of the second part (10766.189). The median of the fist part is 10765 is different from the median of the second part: 10766.189.
 
@@ -145,3 +151,5 @@ xyplot(avg_steps ~ as.numeric(interval) | as.factor(weekday_weekend), data = Spi
     type = "l", layout = c(1, 2), col = c("purple"), main = "Average Number of Steps by Time Interval (imputing missing values)", 
     xlab = "5-minute time period", ylab = "Avg number of steps")
 ```
+
+![Sample panel plot](figures/4.PNG) 
